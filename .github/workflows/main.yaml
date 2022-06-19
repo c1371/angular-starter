@@ -24,6 +24,33 @@ jobs:
       - name: run tests
         run: npm test -- --no-watch --no-progress --browsers=ChromeHeadlessCI
         
+        #send emails block
+      
+      - name: Send mail if failure
+        uses: dawidd6/action-send-mail@v2
+        if: failure()
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.EMAIL }}
+          password: ${{ secrets.PASSW }}
+          subject: ${{ github.job }} job of ${{ github.repository }} has ${{ job.status }}
+          body: ${{ github.job }} stage in workflow "${{ github.workflow }}" of repo:${{ github.repository }} has ${{ job.status }}. Pipeline has stopped.
+          to: ${{ secrets.TO }}
+          from: ${{ secrets.EMAIL }}
+      - name: Send mail if succeess
+        uses: dawidd6/action-send-mail@v2
+        if: success()
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.EMAIL }}
+          password: ${{ secrets.PASSW }}
+          subject: ${{ github.job }} job of ${{ github.repository }} has ${{ job.status }}
+          body: ${{ github.job }} stage in workflow "${{ github.workflow }}" of repo:${{ github.repository }} has ${{ job.status }}
+          to: ${{ secrets.TO }}
+          from: ${{ secrets.EMAIL }}
+        
   build-and-push:
     runs-on: ubuntu-latest
     defaults:
@@ -58,5 +85,31 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
-          push: true
+          push: false
           tags: ghcr.io/${{ github.repository }}/v.${{ github.run_number }}
+        
+        #send emails block
+      - name: Send mail if failure
+        uses: dawidd6/action-send-mail@v2
+        if: failure()
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.EMAIL }}
+          password: ${{ secrets.PASSW }}
+          subject: ${{ github.job }} job of ${{ github.repository }} has ${{ job.status }}
+          body: ${{ github.job }} stage in workflow "${{ github.workflow }}" of repo:${{ github.repository }} has ${{ job.status }}. Pipeline has stopped.
+          to: ${{ secrets.TO }}
+          from: ${{ secrets.EMAIL }}
+      - name: Send mail if succeess
+        uses: dawidd6/action-send-mail@v2
+        if: success()
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.EMAIL }}
+          password: ${{ secrets.PASSW }}
+          subject: ${{ github.job }} job of ${{ github.repository }} has ${{ job.status }}
+          body: ${{ github.job }} stage in workflow "${{ github.workflow }}" of repo:${{ github.repository }} has ${{ job.status }}
+          to: ${{ secrets.TO }}
+          from: ${{ secrets.EMAIL }}
