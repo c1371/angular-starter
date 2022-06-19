@@ -1,0 +1,7 @@
+version: '3'
+services:
+  alpine-nginx-angular:
+    image: ghcr.io/c1371/angular-starter/v.5:latest
+    container_name: angularapp
+    ports: 
+      - 8080:8080
