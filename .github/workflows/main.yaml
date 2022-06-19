@@ -12,7 +12,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      
+      # make file with current time inside so we can meassure pipeline exectuion total time
+      - name: Start time meassure
+        run: echo "$(date +%s)" > ./test.txt
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: my-artifact
+          path: ./angular/test.txt
+          
       - name: Use Node.js 16.x
         uses: actions/setup-node@v3
         with:
@@ -68,7 +76,7 @@ jobs:
         with:
           node-version: 16.x
 
-      - name: Setup
+      - name: setup
         run: npm ci
 
       - name: build
@@ -87,7 +95,19 @@ jobs:
           context: .
           push: false
           tags: ghcr.io/${{ github.repository }}/v.${{ github.run_number }}
-        
+    
+      - uses: actions/download-artifact@v3
+        with:
+          name: my-artifact
+          path: ./angular
+
+      # here we store our total time into Enviroment variable, so we can pass it in email later.
+      - name: count total time
+        run: |
+          start_time=$(cat ./test.txt)
+          #added 20 sec to cover time while pipeline started
+          echo "TOTAL_TIME=$(( $(date +%s) - start_time + 20 ))" >> $GITHUB_ENV
+          
         #send emails block
       - name: Send mail if failure
         uses: dawidd6/action-send-mail@v2
@@ -113,3 +133,15 @@ jobs:
           body: ${{ github.job }} stage in workflow "${{ github.workflow }}" of repo:${{ github.repository }} has ${{ job.status }}
           to: ${{ secrets.TO }}
           from: ${{ secrets.EMAIL }}
+      - name: Send total time via email
+        uses: dawidd6/action-send-mail@v2
+        if: success()
+        with:
+         server_address: smtp.gmail.com
+         server_port: 465
+         username: ${{ secrets.EMAIL }}
+         password: ${{ secrets.PASSW }}
+         subject: ${{ github.job }} job of ${{ github.repository }} has ${{ job.status }}
+         body: Entire pipeline in workflow "${{ github.workflow }}" of repo:${{ github.repository }} has took aproximattely ${{ env.TOTAL_TIME }} seconds to execute
+         to: ${{ secrets.TO }}
+         from: ${{ secrets.EMAIL }}
